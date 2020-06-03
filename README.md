@@ -8,4 +8,8 @@
 ## decode.c  
 解密最后一个节，以挂起的形式创建进程，获取主线程contect结构体后卸载外壳，在指定处分配地址然后拉伸后写入  
 吧context的eip和imagebase做对应修改  
-最后恢复进程，成功脱壳
+最后恢复进程，成功脱壳  
+# 预览
+![成功截图](https://github.com/psbazx/PE_shell/blob/master/%E6%88%90%E5%8A%9F%E6%88%AA%E5%9B%BE.png)  
+first.exe为源程序  
+shell.exe为加壳后  
