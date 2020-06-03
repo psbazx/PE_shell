@@ -37,7 +37,7 @@ int main()
 	DWORD baseAddress;
     TCHAR szBuffer[4] = { 0 };
     ReadProcessMemory(pi.hProcess, (LPCVOID)(contx.Ebx + 8), (LPVOID)&baseAddress, 4, NULL);
-	//printf("挂起进程的线程Context.Eax:%p - Context.Ebx + 8:%p\n", contx.Eax, baseAddress);
+
     int* fileImageBase;
     fileImageBase = (int*)szBuffer;
     DWORD shellImageBase = *fileImageBase;
