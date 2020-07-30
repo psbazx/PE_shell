@@ -1,6 +1,7 @@
 # PE_shell
 环境vs2019 win10  
-准确来说不是壳子，主要用到的技术是Process Hollowing
+准确来说不是壳子，主要用到的技术是Process Hollowing  
+具体功能如下，但是我准备用来出题可能有所异同  
 ## encode.c  
 主要功能  
 1.抹去dos存根，并新增节  
