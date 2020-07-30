@@ -1,4 +1,4 @@
-﻿#define _CRT_SECURE_NO_DEPRECATE
+#define _CRT_SECURE_NO_DEPRECATE
 #include <stdio.h>
 #include <stdlib.h>
 #include <Windows.h>
@@ -12,6 +12,7 @@ LPVOID AllocShellSize(LPSTR shellDirectory, HANDLE shellProcess, LPVOID encryptF
 VOID GetNtHeaderInfo(LPVOID pFileBuffer, DWORD& ImageBase, DWORD& ImageSize);
 VOID GetEncryptFileContext(LPVOID pFileBuffer, DWORD& OEP, DWORD& ImageBase);
 LPVOID FileBufferToImageBuffer(BYTE* decodebuffer, DWORD& size);
+void DoRelocation(LPVOID pFileBuffer, void* OldBase, void* NewBase);
 int main(int argc, char* argv[])
 {
 	WCHAR shellDirectory[100]; //encode后程序这边有个坑，win32api通常是宽字符然而自己写的函数不需要
@@ -70,6 +71,7 @@ int main(int argc, char* argv[])
 		contx.ContextFlags = CONTEXT_FULL;
 
 		contx.Eax = encryptFileOEP + (DWORD)p;
+		//contx.Eip
 		SetThreadContext(pi.hThread, &contx);
 
 		LPVOID szBufferTemp = malloc(pEncryptImageSize);
@@ -199,8 +201,8 @@ LPVOID AllocShellSize(LPSTR shellDirectory, HANDLE shellProcess, LPVOID encryptF
 
 	if (shellImageBase == 0 || shellImageSize == 0 || encryptImageBase == 0 || encryptImageSize == 0)
 	{
-		MessageBoxA(0, "申请空间失败", "失败", 0);
-		return NULL;
+		printf("分配空间失败\n");
+		exit(0);
 	}
 
 	void* p = NULL;
@@ -218,12 +220,46 @@ LPVOID AllocShellSize(LPSTR shellDirectory, HANDLE shellProcess, LPVOID encryptF
 
 	if (p == NULL)
 	{
-		printf("分配空间失败\n");
-		exit(0);
+		p = VirtualAllocEx(shellProcess, NULL, encryptImageSize, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+		if (p) 
+		{
+			return p;
+			//DoRelocation(encryptFileBuffer, (void*)encryptImageBase, p);
+		}
+		else 
+		{
+			printf("分配空间失败\n");
+			exit(0);
+		}
 	}
 
 
 	return p;
+}
+
+void DoRelocation(LPVOID pFileBuffer, void* OldBase, void* NewBase)
+{
+	PIMAGE_DOS_HEADER pDosHeader = NULL;
+	unsigned int i,j=0;
+	unsigned long* t;
+	pDosHeader = (PIMAGE_DOS_HEADER)pFileBuffer;
+	PIMAGE_NT_HEADERS peH = (PIMAGE_NT_HEADERS)((DWORD)pFileBuffer + pDosHeader->e_lfanew);
+	signed long Delta = (signed long)NewBase - peH->OptionalHeader.ImageBase;
+	IMAGE_DATA_DIRECTORY relocations = (peH->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC]);
+	PIMAGE_BASE_RELOCATION p = (PIMAGE_BASE_RELOCATION)((DWORD)pFileBuffer + relocations.VirtualAddress);
+	while (p->VirtualAddress + p->SizeOfBlock)
+	{
+		unsigned short* pw = (unsigned short*)((int)p + sizeof(*p));
+		for (i = 0; i < (p->SizeOfBlock - sizeof(*p)) / sizeof(WORD); ++i)
+		{
+			if (((*pw) & 0xF000) == 0x3000) {
+				t = (unsigned long*)((DWORD)(pFileBuffer)+p->VirtualAddress + ((*pw) & 0x0FFF));
+				*t += Delta;
+			}
+			++pw;
+		}
+		p = (PIMAGE_BASE_RELOCATION)pw;
+	}
 }
 
 VOID GetNtHeaderInfo(LPVOID pFileBuffer, DWORD& ImageBase, DWORD& ImageSize)
