@@ -18,6 +18,7 @@ shell.exe是加壳样本，单纯打印字符串供逆向分析用，无毒
 ## 使用方法  
 编译decode.cpp然后encode.cpp中路径改一下，decode_shell.exe还有待加壳程序路径  
 运行encode即可  
+注:源程序必须有重定位表  
 # 预览
 ![成功截图](https://github.com/psbazx/PE_shell/blob/master/%E6%88%90%E5%8A%9F%E6%88%AA%E5%9B%BE.png)  
 first.exe为源程序  
