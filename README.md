@@ -15,6 +15,9 @@
 本来想把重定位写了来完善一下,但是调试发现操作系统也做了次重定位，如果写的话就是二次重定位了//目前没有搞懂为啥会这样，可能win10内核函数有些不一样  
 所以直接virtualalloc即可,不需要重定位，当然重定位函数我也放那了以后有需要直接复制，经测试没问题,踩了很多坑比如重定位的时候变量类型不能是unsigned啥的。。。  
 shell.exe是加壳样本，单纯打印字符串供逆向分析用，无毒  
+7.31日  
+大哥原话“resumethread调用后主线程从内核函数KiStartUserThread开始运行，它会调用LdrInitializeThunk做Image loader，做完之后才调用的RtlUserThreadStart”  
+LdrInitializeThunk会比较peb处imagebase和我pe的imagebase是否相同，不同则重定位，peb处也就是ebx+8已经被修改所以会帮我们重定位  
 ## 使用方法  
 编译decode.cpp然后encode.cpp中路径改一下，decode_shell.exe还有待加壳程序路径  
 运行encode即可  
